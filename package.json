@@ -7,8 +7,8 @@
     "node": "16.x"
   },
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js",
+    "start": "node index.js",
+    "dev": "nodemon index.js",
     "seed:addAdmin": "node src/seeders/adminSeeder.js"
   },
   "keywords": [],

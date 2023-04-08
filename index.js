@@ -1,8 +1,8 @@
 const express = require("express");
-const config = require("./config");
-const connectDB = require("./config/db");
+const config = require("./src/config");
+const connectDB = require("./src/config/db");
 
-const router = require("./router");
+const router = require("./src/router");
 
 const app = express();
 connectDB();
