@@ -4,14 +4,14 @@ const { USER_ROLE, User } = require("../models/User");
 
 const isAuth = (role = USER_ROLE.LEADER) => {
   return async (req, res, next) => {
-    const token = req.headers.authorization.split(" ")[1];
-
-    if (!token) {
-      res.status(401).json({ msg: "No token, Authorization failed" });
-    }
-
     /* Verify token */
     try {
+      const token = req.header("Authorization")?.split(" ")[1];
+
+      if (!token) {
+        res.status(401).json({ msg: "No token, Authorization failed" });
+      }
+
       const decoded = jwt.verify(token, JWT_SECRET);
       const decodedUser = decoded.user;
 
