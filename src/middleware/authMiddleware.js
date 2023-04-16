@@ -21,7 +21,7 @@ const isAuth = (role = USER_ROLE.LEADER) => {
         throw new Error("Token is not Valid");
       }
 
-      if (user.role !== USER_ROLE.ADMIN || user.role !== role) {
+      if (user.role !== USER_ROLE.ADMIN && user.role !== role) {
         res.status(401);
         throw new Error("You are not authorized");
       }

@@ -32,4 +32,18 @@ const login = async (req, res, next) => {
   }
 };
 
-module.exports = { login };
+const getLoggedIn = async (req, res, next) => {
+  try {
+    const loggedInUser = req.user;
+    if (!loggedInUser) {
+      res.status(401);
+      throw new Error("Your Session was Expired");
+    }
+
+    generalResponse(res, loggedInUser);
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { login, getLoggedIn };

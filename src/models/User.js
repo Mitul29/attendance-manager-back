@@ -9,7 +9,7 @@ const USER_ROLE = {
 
 const UserSchema = new Schema(
   {
-    username: { type: String, unique: true },
+    username: { type: String },
     password: { type: String },
     name: { type: String },
     email: { type: String },

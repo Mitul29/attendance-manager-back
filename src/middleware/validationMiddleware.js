@@ -1,4 +1,4 @@
-const { body, validationResult } = require("express-validator");
+const { body, validationResult, param } = require("express-validator");
 
 const validate = (validations) => async (req, res, next) => {
   try {
@@ -36,4 +36,19 @@ module.exports.validateAddUserField = validate([
     .isEmpty()
     .isNumeric()
     .withMessage("Invalid Attendance Number"),
+]);
+
+module.exports.validateMakeLeaderField = validate([
+  param("id", "UserId required...").not().isEmpty(),
+  body("username", "Username is required...").not().isEmpty(),
+  body("password", "Password is required.").not().isEmpty(),
+]);
+
+module.exports.validateAttendanceField = validate([
+  body("userId", "UserId required...").not().isEmpty(),
+  body("present", "Present Status required...")
+    .not()
+    .isEmpty()
+    .isBoolean()
+    .withMessage("Enter Valid status"),
 ]);
