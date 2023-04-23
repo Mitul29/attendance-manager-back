@@ -16,6 +16,8 @@ router
     userController.addUser
   );
 
+router.route("/hierarchy").get(isAuth(), userController.getUsersHierarchy);
+
 router
   .route("/leaders")
   .get(isAuth(USER_ROLE.ADMIN), userController.getAllLeadersWithMembers);

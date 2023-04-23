@@ -25,6 +25,102 @@ const getAllUsers = async (req, res, next) => {
   }
 };
 
+const getUsersHierarchy = async (req, res, next) => {
+  try {
+    const users = await User.aggregate([
+      { $match: { role: { $eq: USER_ROLE.LEADER } } },
+      {
+        $graphLookup: {
+          from: "users",
+          startWith: "$_id",
+          connectFromField: "_id",
+          connectToField: "assignTo",
+          as: "children",
+          maxDepth: 4,
+          depthField: "level",
+        },
+      },
+      {
+        $addFields: {
+          level: {
+            $reduce: {
+              input: "$children",
+              initialValue: "$price",
+              in: { $multiply: ["$$value", { $subtract: [1, "$$this"] }] },
+            },
+          },
+          children: {
+            $reduce: {
+              input: "$children",
+              initialValue: {
+                currentLevel: -1,
+                currentLevelChildren: [],
+                previousLevelChildren: [],
+              },
+              in: {
+                $let: {
+                  vars: {
+                    prev: {
+                      $cond: [
+                        { $eq: ["$$value.currentLevel", "$$this.level"] },
+                        "$$value.previousLevelChildren",
+                        "$$value.currentLevelChildren",
+                      ],
+                    },
+                    current: {
+                      $cond: [
+                        { $eq: ["$$value.currentLevel", "$$this.level"] },
+                        "$$value.currentLevelChildren",
+                        [],
+                      ],
+                    },
+                  },
+                  in: {
+                    currentLevel: "$$this.level",
+                    previousLevelChildren: "$$prev",
+                    currentLevelChildren: {
+                      $concatArrays: [
+                        "$$current",
+                        [
+                          {
+                            $mergeObjects: [
+                              "$$this",
+                              {
+                                children: {
+                                  $filter: {
+                                    input: "$$prev",
+                                    as: "e",
+                                    cond: {
+                                      $eq: ["$$e.assignTo", "$$this._id"],
+                                    },
+                                  },
+                                },
+                              },
+                            ],
+                          },
+                        ],
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          children: "$children.currentLevelChildren",
+        },
+      },
+    ]);
+
+    generalResponse(res, users);
+  } catch (error) {
+    next(error);
+  }
+};
+
 const getAllLeadersWithMembers = async (req, res, next) => {
   try {
     const { search = "" } = req.query;
@@ -237,6 +333,7 @@ const updateLeader = async (req, res, next) => {
 
 module.exports = {
   getAllUsers,
+  getUsersHierarchy,
   getAllLeadersWithMembers,
   getLeadersWithMembers,
   getUser,

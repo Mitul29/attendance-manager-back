@@ -12,6 +12,9 @@ const addAttendance = async (req, res, next) => {
     const { userId, present, remark = "", date = new Date() } = req.body;
 
     const TODAY = startOfDay(new Date(date));
+    // const TODAY = new Date(date);
+
+    console.log(`INN Add Attendance for Date: `, TODAY);
 
     if (!isValidObjectId(userId)) {
       throw new Error("Invalid UserId");
@@ -62,9 +65,12 @@ const addAttendance = async (req, res, next) => {
 const getMembersAttendance = async (req, res, next) => {
   try {
     const { leaderId } = req.params;
-    const { date } = req.query;
+    const { date = new Date() } = req.query;
 
-    const TODAY = startOfDay(new Date(date) || new Date());
+    const TODAY = startOfDay(new Date(date));
+    // const TODAY = new Date(date);
+
+    console.log(`INN GET Member's Attendance for Date: `, TODAY);
 
     if (!isValidObjectId(leaderId)) {
       throw new Error("Invalid LeaderId");
@@ -107,8 +113,11 @@ const getMembersAttendanceWithFilter = async (req, res, next) => {
       ...(search && { name: { $regex: new RegExp(search, "i") } }),
     };
 
+    // const DATE_FROM = new Date(dateFrom);
     const DATE_FROM = startOfDay(new Date(dateFrom));
     const DATE_TO = endOfDay(new Date(dateTo));
+
+    console.log("Inn Get Report between dates", [DATE_FROM, DATE_TO]);
 
     if (leaderId && !isValidObjectId(leaderId)) {
       throw new Error("Invalid LeaderId");
