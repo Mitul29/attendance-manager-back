@@ -4,6 +4,7 @@ const bcrypt = require("bcryptjs");
 const { User } = require("../models/User");
 const { JWT_SECRET } = require("../config");
 const generalResponse = require("../helper/commonHelper");
+const HttpException = require("../exceptions/HttpException");
 
 const login = async (req, res, next) => {
   try {
@@ -12,14 +13,12 @@ const login = async (req, res, next) => {
     const user = await User.findOne({ username });
 
     if (!user) {
-      res.status(400);
-      throw new Error("Invalid Credentials");
+      throw new HttpException(400, "Invalid Credentials");
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      res.status(400);
-      throw new Error("Invalid Credentials");
+      throw new HttpException(400, "Invalid Credentials");
     }
 
     const expiresIn = "30d";
@@ -36,8 +35,7 @@ const getLoggedIn = async (req, res, next) => {
   try {
     const loggedInUser = req.user;
     if (!loggedInUser) {
-      res.status(401);
-      throw new Error("Your Session was Expired");
+      throw new HttpException(401, "Your Session was Expired");
     }
 
     generalResponse(res, loggedInUser);

@@ -24,7 +24,11 @@ router
 
 router
   .route("/leaders/:id")
-  .get(isAuth(), userController.getLeadersWithMembers);
+  .get(isAuth(USER_ROLE.ADMIN), userController.getLeaderWithMembers);
+
+router
+  .route("/leaders/:id/child")
+  .get(isAuth(), userController.getLeaderChildren);
 
 router
   .route("/:id")

@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const { JWT_SECRET } = require("../config");
 const { USER_ROLE, User } = require("../models/User");
+const HttpException = require("../exceptions/HttpException");
 
 const isAuth = (role = USER_ROLE.LEADER) => {
   return async (req, res, next) => {
@@ -18,12 +19,11 @@ const isAuth = (role = USER_ROLE.LEADER) => {
       const user = await User.findById(decodedUser.id);
 
       if (!user) {
-        throw new Error("Token is not Valid");
+        throw new HttpException(401, "Token is not Valid");
       }
 
       if (user.role !== USER_ROLE.ADMIN && user.role !== role) {
-        res.status(401);
-        throw new Error("You are not authorized");
+        throw new HttpException(401, "You are not authorized");
       }
 
       req.user = user;

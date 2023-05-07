@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs");
 const mongoose = require("mongoose");
 const generalResponse = require("../helper/commonHelper");
 const { User, USER_ROLE } = require("../models/User");
+const HttpException = require("../exceptions/HttpException");
 
 const ObjectId = mongoose.Types.ObjectId;
 
@@ -145,7 +146,38 @@ const getAllLeadersWithMembers = async (req, res, next) => {
   }
 };
 
-const getLeadersWithMembers = async (req, res, next) => {
+const getLeaderWithMembers = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const leader = await User.findOne({ _id: id, role: USER_ROLE.LEADER });
+
+    if (!leader) {
+      throw new HttpException(400, "Invalid LeaderId");
+    }
+
+    const assignedMembers = await User.find({ assignTo: leader._id });
+    const allAssignedMembersWithChild = [];
+    for (const subLeader of assignedMembers) {
+      const allMembers = await User.find({ assignTo: subLeader._id });
+      allAssignedMembersWithChild.push({
+        ...subLeader.toObject(),
+        assignedMembers: allMembers,
+      });
+    }
+
+    const userWithMember = {
+      ...leader.toObject(),
+      assignedMembers: allAssignedMembersWithChild,
+    };
+
+    generalResponse(res, userWithMember);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getLeaderChildren = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { search } = req.query;
@@ -200,7 +232,7 @@ const editUser = async (req, res, next) => {
     const updateFields = {};
 
     if (assignTo !== undefined && assignTo === id) {
-      throw new Error("Not able to assign self");
+      throw new HttpException(400, "Not able to assign self");
     }
 
     if (name !== undefined) updateFields.name = name;
@@ -226,7 +258,7 @@ const deleteUser = async (req, res, next) => {
 
     const user = await User.findByIdAndRemove(id);
     if (!user) {
-      throw new Error("User not found");
+      throw new HttpException(400, "User not found");
     }
 
     return generalResponse(res, user, "User Deleted Successfully");
@@ -242,16 +274,18 @@ const addToLeader = async (req, res, next) => {
 
     const user = await User.findById(new ObjectId(id));
     if (!user) {
-      throw new Error("Invalid UserID");
+      throw new HttpException(400, "Invalid UserID");
     }
 
     const userNameExist = await User.findOne({ username });
     if (userNameExist) {
-      throw new Error("Username already exist");
+      throw new HttpException(400, "Username already exist");
     }
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
+
+    console.log("HELLLO BRO");
 
     const leader = await User.findByIdAndUpdate(
       id,
@@ -273,7 +307,7 @@ const removeLeader = async (req, res, next) => {
       role: USER_ROLE.LEADER,
     });
     if (!user) {
-      throw new Error("Invalid UserId");
+      throw new HttpException(400, "Invalid UserId");
     }
 
     const leader = await User.findByIdAndUpdate(id, {
@@ -302,17 +336,17 @@ const updateLeader = async (req, res, next) => {
     });
 
     if (!user) {
-      throw new Error("Invalid UserId");
+      throw new HttpException(400, "Invalid UserId");
     }
 
     if (!username && !password) {
-      throw new Error("Username or Password required.");
+      throw new HttpException(400, "Username or Password required.");
     }
 
     if (username && user.username !== username) {
       const userNameExist = await User.findOne({ username });
       if (userNameExist) {
-        throw new Error("Username Already Exist");
+        throw new HttpException(400, "Username Already Exist");
       }
       user.username = username;
     }
@@ -335,7 +369,8 @@ module.exports = {
   getAllUsers,
   getUsersHierarchy,
   getAllLeadersWithMembers,
-  getLeadersWithMembers,
+  getLeaderWithMembers,
+  getLeaderChildren,
   getUser,
   addUser,
   editUser,
